@@ -20,6 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -27,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.TimeZone;
 import java.util.function.ToIntFunction;
 
 import static com.faforever.server.stats.ArmyStatistics.BrainType.AI;
@@ -155,6 +158,7 @@ public class ArmyStatisticsService {
     builtSacus(categoryStats.getSacu().getBuilt(), achievementUpdates, playerId);
     lowestAcuHealth(count(unitStats, ArmyStatistics.UnitStats::getLowestHealth, Unit.ACUS), survived, achievementUpdates, playerId);
     highscore(scoredHighest, numberOfHumans, achievementUpdates, playerId);
+    endTime(game.getEndTime(), player.getTimeZone(), achievementUpdates, playerId);
 
     eventService.executeBatchUpdate(eventUpdates)
       .exceptionally(throwable -> {
@@ -168,6 +172,14 @@ public class ArmyStatisticsService {
         log.warn("Could not report '" + achievementUpdates.size() + "' achievement updates for player '" + player + "'", throwable);
         return null;
       });
+  }
+
+  private void endTime(Instant endTime, TimeZone timeZone, List<AchievementUpdate> achievementUpdates, int playerId) {
+    ZonedDateTime zonedDateTime = endTime.atZone(timeZone.toZoneId());
+    int hour = zonedDateTime.getHour();
+    if (hour >= 3 && hour <= 6) {
+      unlock(AchievementId.ACH_SLEEP_IS_FOR_THE_WEAK, achievementUpdates, playerId);
+    }
   }
 
   private void builtMercies(int count, List<AchievementUpdate> achievementUpdates, int playerId) {

@@ -38,6 +38,7 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
@@ -540,6 +541,18 @@ public class ArmyStatisticsServiceTest {
 
     instance.process(player, game);
     verifyZeroInteractions(achievementService);
+    verifyZeroInteractions(eventService);
+  }
+
+  @Test
+  public void testSleepIsForTheWeak() throws Exception {
+    game.replaceArmyStatistics(readStats("/stats/game_stats_single_player.json"));
+
+    instance.process(player, game);
+
+    assertThat(achievementUpdates, hasItem(new AchievementUpdate(42, AchievementId.ACH_SLEEP_IS_FOR_THE_WEAK, AchievementUpdate.UpdateType.UNLOCK, 0)));
+
+    verifyNoMoreInteractions(achievementService);
     verifyZeroInteractions(eventService);
   }
 
